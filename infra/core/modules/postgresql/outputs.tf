@@ -4,12 +4,6 @@ output "database_url" {
 }
 
 output "database_username" {
-  value       = "${var.administrator_login}"
+  value       = data.azuread_user.aad_admin.user_principal_name
   description = "The PostgreSQL server user name."
-}
-
-output "database_password" {
-  value       = random_password.password.result
-  sensitive   = true
-  description = "The PostgreSQL server password."
 }

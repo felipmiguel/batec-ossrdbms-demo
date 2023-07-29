@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "3.49.0"
+      version = ">=3.67.0"
     }
     azurecaf = {
       source  = "aztfmod/azurecaf"
@@ -47,7 +47,6 @@ module "application" {
 
   database_url      = module.database.database_url
   database_username = module.database.database_username
-  database_password = module.database.database_password
 }
 
 module "database" {

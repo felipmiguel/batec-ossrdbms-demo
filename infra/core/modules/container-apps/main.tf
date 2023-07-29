@@ -13,7 +13,7 @@ resource "azurecaf_name" "container_registry" {
   suffixes      = [var.environment]
 }
 
-resource "azurerm_container_registry" "container-registry" {
+resource "azurerm_container_registry" "container_registry" {
   name                = azurecaf_name.container_registry.result
   resource_group_name = var.resource_group
   location            = var.location
@@ -24,6 +24,13 @@ resource "azurerm_container_registry" "container-registry" {
     "environment"      = var.environment
     "application-name" = var.application_name
   }
+}
+
+resource "azurerm_role_assignment" "aca_msi_acr_pull" {
+  principal_id                     = azurerm_user_assigned_identity.msi_container_app.principal_id
+  role_definition_name             = "AcrPull"
+  scope                            = azurerm_container_registry.container_registry.id
+  skip_service_principal_aad_check = true
 }
 
 resource "azurecaf_name" "log_analytics_workspace" {
@@ -40,14 +47,26 @@ resource "azurerm_log_analytics_workspace" "application" {
   retention_in_days   = 30
 }
 
-resource "azurecaf_name" "application-environment" {
+resource "azurecaf_name" "msi_container_app" {
+  name          = var.application_name
+  resource_type = "azurerm_user_assigned_identity"
+  suffixes      = [var.environment]
+}
+
+resource "azurerm_user_assigned_identity" "msi_container_app" {
+  name                = azurecaf_name.msi_container_app.result
+  resource_group_name = var.resource_group
+  location            = var.location
+}
+
+resource "azurecaf_name" "application_environment" {
   name          = var.application_name
   resource_type = "azurerm_container_app_environment"
   suffixes      = [var.environment]
 }
 
 resource "azurerm_container_app_environment" "application" {
-  name                       = azurecaf_name.application-environment.result
+  name                       = azurecaf_name.application_environment.result
   resource_group_name        = var.resource_group
   location                   = var.location
   log_analytics_workspace_id = azurerm_log_analytics_workspace.application.id
@@ -71,28 +90,25 @@ resource "azurerm_container_app" "application" {
     ]
   }
 
-  secret {
-    name  = "registry-credentials"
-    value = azurerm_container_registry.container-registry.admin_password
+  identity {
+    type = "UserAssigned"
+    identity_ids = [ 
+      azurerm_user_assigned_identity.msi_container_app.id
+     ]
   }
 
   registry {
-    server               = azurerm_container_registry.container-registry.login_server
-    username             = azurerm_container_registry.container-registry.admin_username
-    password_secret_name = "registry-credentials"
+    identity = azurerm_user_assigned_identity.msi_container_app.id
+    server = azurerm_container_registry.container_registry.login_server
   }
 
   ingress {
     external_enabled = true
     target_port      = 8080
     traffic_weight {
-      percentage = 100
+      percentage      = 100
       latest_revision = true
     }
-  }
-  secret {
-    name  = "database-password"
-    value = var.database_password
   }
 
   template {
@@ -108,10 +124,6 @@ resource "azurerm_container_app" "application" {
       env {
         name  = "DATABASE_USERNAME"
         value = var.database_username
-      }
-      env {
-        name        = "DATABASE_PASSWORD"
-        secret_name = "database-password"
       }
     }
     min_replicas = 1
