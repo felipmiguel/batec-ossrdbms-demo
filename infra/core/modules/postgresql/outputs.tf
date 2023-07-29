@@ -4,6 +4,6 @@ output "database_url" {
 }
 
 output "database_username" {
-  value       = data.azuread_user.aad_admin.user_principal_name
+  value       = azurerm_postgresql_flexible_server_active_directory_administrator.aad_admin.principal_name
   description = "The PostgreSQL server user name."
 }

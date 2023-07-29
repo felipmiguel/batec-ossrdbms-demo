@@ -45,15 +45,26 @@ module "application" {
   environment      = local.environment
   location         = var.location
 
-  database_url      = module.database.database_url
-  database_username = module.database.database_username
+  pgsql_database_url      = module.pgsql_database.database_url
+  pgsql_database_username = module.pgsql_database.database_username
+
+  mysql_database_url      = module.mysql_database.database_url
+  mysql_database_username = module.mysql_database.database_username
 }
 
-module "database" {
-  source           = "./modules/postgresql"
+module "pgsql_database" {
+  source            = "./modules/postgresql"
+  resource_group    = azurerm_resource_group.main.name
+  application_name  = var.application_name
+  environment       = local.environment
+  location          = var.location
+  high_availability = false
+}
+
+module "mysql_database" {
+  source           = "./modules/mysql"
   resource_group   = azurerm_resource_group.main.name
   application_name = var.application_name
   environment      = local.environment
   location         = var.location
-  high_availability= false
 }

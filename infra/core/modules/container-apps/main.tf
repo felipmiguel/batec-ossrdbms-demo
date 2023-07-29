@@ -72,14 +72,14 @@ resource "azurerm_container_app_environment" "application" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.application.id
 }
 
-resource "azurecaf_name" "application" {
+resource "azurecaf_name" "pgsql_application" {
   name          = var.application_name
   resource_type = "azurerm_container_app"
-  suffixes      = [var.environment]
+  suffixes      = [var.environment, "pgsql"]
 }
 
-resource "azurerm_container_app" "application" {
-  name                         = azurecaf_name.application.result
+resource "azurerm_container_app" "pgsql_application" {
+  name                         = azurecaf_name.pgsql_application.result
   container_app_environment_id = azurerm_container_app_environment.application.id
   resource_group_name          = var.resource_group
   revision_mode                = "Single"
@@ -113,17 +113,75 @@ resource "azurerm_container_app" "application" {
 
   template {
     container {
-      name   = azurecaf_name.application.result
+      name   = azurecaf_name.pgsql_application.result
       image  = "ghcr.io/microsoft/nubesgen/nubesgen-native:main"
       cpu    = 0.25
       memory = "0.5Gi"
       env {
         name  = "DATABASE_URL"
-        value = var.database_url
+        value = var.pgsql_database_url
       }
       env {
         name  = "DATABASE_USERNAME"
-        value = var.database_username
+        value = var.pgsql_database_username
+      }
+    }
+    min_replicas = 1
+  }
+}
+
+resource "azurecaf_name" "mysql_application" {
+  name          = var.application_name
+  resource_type = "azurerm_container_app"
+  suffixes      = [var.environment, "mysql"]
+}
+
+resource "azurerm_container_app" "mysql_application" {
+  name                         = azurecaf_name.mysql_application.result
+  container_app_environment_id = azurerm_container_app_environment.application.id
+  resource_group_name          = var.resource_group
+  revision_mode                = "Single"
+
+  lifecycle {
+    ignore_changes = [
+      template.0.container["image"]
+    ]
+  }
+
+  identity {
+    type = "UserAssigned"
+    identity_ids = [ 
+      azurerm_user_assigned_identity.msi_container_app.id
+     ]
+  }
+
+  registry {
+    identity = azurerm_user_assigned_identity.msi_container_app.id
+    server = azurerm_container_registry.container_registry.login_server
+  }
+
+  ingress {
+    external_enabled = true
+    target_port      = 8080
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
+    }
+  }
+
+  template {
+    container {
+      name   = azurecaf_name.mysql_application.result
+      image  = "ghcr.io/microsoft/nubesgen/nubesgen-native:main"
+      cpu    = 0.25
+      memory = "0.5Gi"
+      env {
+        name  = "DATABASE_URL"
+        value = var.mysql_database_url
+      }
+      env {
+        name  = "DATABASE_USERNAME"
+        value = var.mysql_database_username
       }
     }
     min_replicas = 1

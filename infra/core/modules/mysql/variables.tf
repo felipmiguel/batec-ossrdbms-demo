@@ -1,11 +1,13 @@
 variable "resource_group" {
   type        = string
   description = "The resource group"
+  default     = ""
 }
 
 variable "application_name" {
   type        = string
   description = "The name of your application"
+  default     = ""
 }
 
 variable "environment" {
@@ -17,24 +19,17 @@ variable "environment" {
 variable "location" {
   type        = string
   description = "The Azure region where all resources in this example should be created"
+  default     = ""
 }
 
-variable "pgsql_database_url" {
+variable "administrator_login" {
   type        = string
-  description = "The URL to the database"
+  description = "The MySQL administrator login"
+  default     = "myadmin"
 }
 
-variable "pgsql_database_username" {
+variable "database_name" {
   type        = string
-  description = "The database username"
-}
-
-variable "mysql_database_url" {
-  type        = string
-  description = "The URL to the database"
-}
-
-variable "mysql_database_username" {
-  type        = string
-  description = "The database username"
+  description = "The MySQL database name"
+  default     = "db"
 }
