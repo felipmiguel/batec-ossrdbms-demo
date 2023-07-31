@@ -15,4 +15,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.4.0" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.3" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../repo/Todo.Repo.csproj" />
+  </ItemGroup>
 </Project>

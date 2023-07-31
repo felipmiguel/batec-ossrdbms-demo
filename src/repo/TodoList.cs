@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SimpleTodo.Api;
+namespace SimpleTodo.Repo;
 
 public class TodoList
 {

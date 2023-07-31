@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SimpleTodo.Api;
 
+namespace SimpleTodo.Repo;
 public class TodoDb : DbContext
 {
     public TodoDb(DbContextOptions options) : base(options) { }

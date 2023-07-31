@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace SimpleTodo.Api;
+namespace SimpleTodo.Repo;
 
 public class ListsRepository
 {
