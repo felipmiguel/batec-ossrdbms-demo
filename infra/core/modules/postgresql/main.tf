@@ -95,3 +95,26 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "database" {
   start_ip_address = "0.0.0.0"
   end_ip_address   = "0.0.0.0"
 }
+
+# This rule is to enable the access from agent IP
+resource "azurecaf_name" "postgresql_firewall_rule_allow_iac_machine" {
+  name          = var.application_name
+  resource_type = "azurerm_postgresql_flexible_server_firewall_rule"
+  suffixes      = [var.environment, "iac"]
+}
+
+data "http" "myip" {
+  url = "http://whatismyip.akamai.com"
+}
+
+locals {
+  myip = chomp(data.http.myip.response_body)
+}
+
+# This rule is to enable current machine
+resource "azurerm_postgresql_flexible_server_firewall_rule" "rule_allow_iac_machine" {
+  name             = azurecaf_name.postgresql_firewall_rule_allow_iac_machine.result
+  server_id        = azurerm_postgresql_flexible_server.database.id
+  start_ip_address = local.myip
+  end_ip_address   = local.myip
+}

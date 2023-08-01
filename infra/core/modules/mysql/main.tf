@@ -53,6 +53,10 @@ resource "azurerm_mysql_flexible_server" "database" {
     "environment"      = var.environment
     "application-name" = var.application_name
   }
+
+  lifecycle {
+    ignore_changes = [zone]
+  }
 }
 data "azurerm_client_config" "current_client" {
 }
@@ -91,4 +95,27 @@ resource "azurerm_mysql_flexible_server_firewall_rule" "database" {
   server_name         = azurerm_mysql_flexible_server.database.name
   start_ip_address    = "0.0.0.0"
   end_ip_address      = "0.0.0.0"
+}
+
+resource "azurecaf_name" "mysql_firewall_rule_allow_iac_machine" {
+  name          = var.application_name
+  resource_type = "azurerm_mysql_firewall_rule"
+  suffixes      = [var.environment, "iac"]
+}
+
+data "http" "myip" {
+  url = "http://whatismyip.akamai.com"
+}
+
+locals {
+  myip = chomp(data.http.myip.response_body)
+}
+
+# This rule is to enable current machine
+resource "azurerm_mysql_flexible_server_firewall_rule" "rule_allow_iac_machine" {
+  name                = azurecaf_name.mysql_firewall_rule_allow_iac_machine.result
+  resource_group_name = var.resource_group
+  server_name         = azurerm_mysql_flexible_server.database.name
+  start_ip_address    = local.myip
+  end_ip_address      = local.myip
 }

@@ -1,16 +1,29 @@
 using Azure.Identity;
 using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using SimpleTodo.Repo;
 
 var builder = WebApplication.CreateBuilder(args);
-var credential = new DefaultAzureCredential();
-builder.Configuration.AddAzureKeyVault(new Uri(builder.Configuration["AZURE_KEY_VAULT_ENDPOINT"]), credential);
-
 builder.Services.AddScoped<ListsRepository>();
 builder.Services.AddDbContext<TodoDb>(options =>
 {
-    var connectionString = builder.Configuration[builder.Configuration["AZURE_SQL_CONNECTION_STRING_KEY"]];
-    options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure());
+    switch (builder.Configuration["TargetDb"])
+    {
+        case "MySql":
+            string mysqlConnString = builder.Configuration.GetConnectionString("MySqlConnection") ?? throw new InvalidOperationException("MySqlConnection must be set in the configuration");
+            var serverVersion = ServerVersion.Parse("5.7", ServerType.MySql);
+            options
+                .UseMySql(mysqlConnString, serverVersion)
+                .UseAzureADAuthentication(new DefaultAzureCredential());
+            break;
+        case "Postgresql":
+            string npgConnString = builder.Configuration.GetConnectionString("PgSqlConnection") ?? throw new InvalidOperationException("PgSqlConnection must be set in the configuration");
+            options
+                .UseNpgsql(npgConnString, options => options.UseAzureADAuthentication(new DefaultAzureCredential()));
+            break;
+        default:
+            throw new InvalidOperationException("TargetDb must be set to either MySql or Postgresql");
+    }
 });
 
 builder.Services.AddControllers();
@@ -30,14 +43,16 @@ app.UseCors(policy =>
     policy.AllowAnyHeader();
     policy.AllowAnyMethod();
 });
-    
+
 // Swagger UI
-app.UseSwaggerUI(options => {
+app.UseSwaggerUI(options =>
+{
     options.SwaggerEndpoint("./openapi.yaml", "v1");
     options.RoutePrefix = "";
 });
 
-app.UseStaticFiles(new StaticFileOptions{
+app.UseStaticFiles(new StaticFileOptions
+{
     // Serve openapi.yaml file
     ServeUnknownFileTypes = true,
 });

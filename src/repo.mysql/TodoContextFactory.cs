@@ -28,8 +28,9 @@ namespace SimpleTodo.Repo.MySql
             {
                 string connectionString = GetConnectionString(config);
                 var serverVersion = ServerVersion.Parse("5.7", ServerType.MySql);
-                options.UseMySql(connectionString, serverVersion,
-                    optionsBuilder => optionsBuilder.MigrationsAssembly(Assembly.GetExecutingAssembly().FullName))
+                options.UseMySql(connectionString, serverVersion, 
+                    optionsBuilder => optionsBuilder.MigrationsAssembly(Assembly.GetExecutingAssembly().FullName)
+                        .EnableRetryOnFailure(3))
                 .UseAzureADAuthentication(new DefaultAzureCredential());
             });
 

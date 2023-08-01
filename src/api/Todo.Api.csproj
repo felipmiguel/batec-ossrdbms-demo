@@ -8,12 +8,11 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.9.0" />
-    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.2.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="4.0.1" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.4.0" />
-    <PackageReference Include="System.Drawing.Common" Version="5.0.3" />
+    <PackageReference Include="Batec.Azure.Data.Extensions.Pomelo.EntityFrameworkCore" Version="1.0.0" />
+    <PackageReference Include="Batec.Azure.Data.Extensions.Npgsql.EntityFrameworkCore" Version="1.0.0" />
+    <!-- <PackageReference Include="System.Drawing.Common" Version="5.0.3" /> -->
   </ItemGroup>
 
   <ItemGroup>
