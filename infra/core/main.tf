@@ -39,17 +39,13 @@ resource "azurerm_resource_group" "main" {
 }
 
 module "application" {
-  source           = "./modules/container-apps"
-  resource_group   = azurerm_resource_group.main.name
-  application_name = var.application_name
-  environment      = local.environment
-  location         = var.location
-
-  pgsql_database_url      = module.pgsql_database.database_url
-  pgsql_database_username = module.pgsql_database.database_username
-
-  mysql_database_url      = module.mysql_database.database_url
-  mysql_database_username = module.mysql_database.database_username
+  source                  = "./modules/container-apps"
+  resource_group          = azurerm_resource_group.main.name
+  application_name        = var.application_name
+  environment             = local.environment
+  location                = var.location
+  pgsql_connection_string = module.pgsql_database.database_dotnet_connection_string
+  mysql_connection_string = module.mysql_database.database_dotnet_connection_string
 }
 
 module "pgsql_database" {

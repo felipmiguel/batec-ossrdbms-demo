@@ -80,6 +80,9 @@ resource "azurerm_mysql_flexible_database" "database" {
   server_name         = azurerm_mysql_flexible_server.database.name
   charset             = "utf8"
   collation           = "utf8_unicode_ci"
+  lifecycle {
+    ignore_changes = [charset, collation]
+  }
 }
 
 resource "azurecaf_name" "mysql_firewall_rule" {

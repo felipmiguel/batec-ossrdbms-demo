@@ -1,3 +1,4 @@
+using Azure.Core;
 using Azure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
@@ -7,19 +8,32 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<ListsRepository>();
 builder.Services.AddDbContext<TodoDb>(options =>
 {
+    DefaultAzureCredential azureCredential;
+    if (string.IsNullOrEmpty(builder.Configuration["UserAssignedManagedClientId"]))
+    {
+        azureCredential = new DefaultAzureCredential();
+    }
+    else
+    {
+        azureCredential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+        {
+            ManagedIdentityClientId = builder.Configuration["UserAssignedManagedClientId"]
+        });
+    }
+    
     switch (builder.Configuration["TargetDb"])
     {
         case "MySql":
-            string mysqlConnString = builder.Configuration.GetConnectionString("MySqlConnection") ?? throw new InvalidOperationException("MySqlConnection must be set in the configuration");
+            string mysqlConnString = builder.Configuration["MySqlConnection"] ?? throw new InvalidOperationException("MySqlConnection must be set in the configuration");
             var serverVersion = ServerVersion.Parse("5.7", ServerType.MySql);
             options
                 .UseMySql(mysqlConnString, serverVersion)
-                .UseAzureADAuthentication(new DefaultAzureCredential());
+                .UseAzureADAuthentication(azureCredential);
             break;
         case "Postgresql":
-            string npgConnString = builder.Configuration.GetConnectionString("PgSqlConnection") ?? throw new InvalidOperationException("PgSqlConnection must be set in the configuration");
+            string npgConnString = builder.Configuration["PgSqlConnection"] ?? throw new InvalidOperationException("PgSqlConnection must be set in the configuration");
             options
-                .UseNpgsql(npgConnString, options => options.UseAzureADAuthentication(new DefaultAzureCredential()));
+                .UseNpgsql(npgConnString, options => options.UseAzureADAuthentication(azureCredential));
             break;
         default:
             throw new InvalidOperationException("TargetDb must be set to either MySql or Postgresql");
@@ -34,7 +48,14 @@ var app = builder.Build();
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TodoDb>();
-    await db.Database.EnsureCreatedAsync();
+    try
+    {
+        await db.Database.EnsureCreatedAsync();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Error ensuring database created: {0}", ex.Message);
+    }
 }
 
 app.UseCors(policy =>

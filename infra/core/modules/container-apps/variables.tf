@@ -19,22 +19,12 @@ variable "location" {
   description = "The Azure region where all resources in this example should be created"
 }
 
-variable "pgsql_database_url" {
+variable "pgsql_connection_string" {
   type        = string
-  description = "The URL to the database"
+  description = "The connection string to postgresql database"  
 }
 
-variable "pgsql_database_username" {
+variable "mysql_connection_string" {
   type        = string
-  description = "The database username"
-}
-
-variable "mysql_database_url" {
-  type        = string
-  description = "The URL to the database"
-}
-
-variable "mysql_database_username" {
-  type        = string
-  description = "The database username"
+  description = "The connection string to mysql database"  
 }
