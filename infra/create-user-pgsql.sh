@@ -10,10 +10,7 @@ echo 'Getting password for current user'
 ADMIN_PASSWORD=$(az account get-access-token --resource-type oss-rdbms -o tsv --query accessToken)
 
 cat <<EOF > pgsqluser.sql
-SET aad_validate_oids_in_tenant = off;
-REVOKE ALL PRIVILEGES ON DATABASE "${DATABASE_NAME}" FROM "${APPLICATION_LOGIN_NAME}";
-DROP USER IF EXISTS "${APPLICATION_LOGIN_NAME}";
-CREATE ROLE "${APPLICATION_LOGIN_NAME}" WITH LOGIN PASSWORD '${APPLICATION_IDENTITY_APPID}' IN ROLE azure_ad_user;
+select * from pgaadauth_create_principal_with_oid('${APPLICATION_LOGIN_NAME}', '${APPLICATION_IDENTITY_APPID}', 'service', false, false);
 GRANT ALL PRIVILEGES ON DATABASE "${DATABASE_NAME}" TO "${APPLICATION_LOGIN_NAME}";
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "${APPLICATION_LOGIN_NAME}";
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "${APPLICATION_LOGIN_NAME}";

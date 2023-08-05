@@ -21,6 +21,27 @@ cd ..
 # create postgresql login for managed identity
 ./create-user-pgsql.sh $PGSQL_SERVER $PGSQL_DATABASE_NAME $MSI_LOGIN_NAME $APPLICATION_IDENTITY_APPID $PGSQL_ADMIN_USER
 
+# create database schema using ef tools
+cd ../src/repo.mysql
+cat <<EOF > appsettings.json
+{
+    "ConnectionStrings": {
+        "DefaultConnection": "Server=${MYSQL_SERVER}.mysql.database.azure.com;UserID=${MYSQL_ADMIN_USER};Database=${MYSQL_DATABASE_NAME};SslMode=Required;"
+    }
+}
+EOF
+dotnet ef database update
+
+cd ../repo.pgsql
+cat <<EOF > appsettings.json
+{
+    "ConnectionStrings": {
+        "DefaultConnection": "Server=${PGSQL_SERVER}.postgres.database.azure.com;User Id=${PGSQL_ADMIN_USER};Database=${PGSQL_DATABASE_NAME};Ssl Mode=Require;Port=5432;Trust Server Certificate=true"
+    }
+}
+EOF
+dotnet ef database update
+
 # create docker image for the app
-cd ../src
+cd ..
 az acr build -t $ACR_NAME.azurecr.io/todoapi:latest -t $ACR_NAME.azurecr.io/todoapi:1.0.0 -r $ACR_NAME .
