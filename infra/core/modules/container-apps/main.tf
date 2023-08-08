@@ -16,6 +16,7 @@ locals {
 resource "azurecaf_name" "container_registry" {
   name          = var.application_name
   resource_type = "azurerm_container_registry"
+  random_length = 3
   suffixes      = [var.environment]
 }
 
