@@ -56,3 +56,7 @@ output "pgsql_database_name" {
 output "msi_database_login_name" {
   value = module.application.database_login_name
 }
+
+output "container_environment_name" {
+  value = module.application.container_environment_name
+}
