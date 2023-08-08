@@ -27,13 +27,13 @@ builder.Services.AddDbContext<TodoDb>(options =>
             string mysqlConnString = builder.Configuration["MySqlConnection"] ?? throw new InvalidOperationException("MySqlConnection must be set in the configuration");
             var serverVersion = ServerVersion.Parse("5.7", ServerType.MySql);
             options
-                .UseMySql(mysqlConnString, serverVersion)
+                .UseMySql(mysqlConnString, serverVersion, options => options.EnableRetryOnFailure())
                 .UseAzureADAuthentication(azureCredential);
             break;
         case "Postgresql":
             string npgConnString = builder.Configuration["PgSqlConnection"] ?? throw new InvalidOperationException("PgSqlConnection must be set in the configuration");
             options
-                .UseNpgsql(npgConnString, options => options.UseAzureADAuthentication(azureCredential));
+                .UseNpgsql(npgConnString, options => options.UseAzureADAuthentication(azureCredential).EnableRetryOnFailure());
             break;
         default:
             throw new InvalidOperationException("TargetDb must be set to either MySql or Postgresql");
