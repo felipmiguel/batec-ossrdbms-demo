@@ -52,11 +52,16 @@ output "pgsql_database_name" {
   value       = module.pgsql_database.database_name
   description = "The PostgreSQL database name"
 }
- 
+
 output "msi_database_login_name" {
   value = module.application.database_login_name
 }
 
 output "container_environment_name" {
   value = module.application.container_environment_name
+}
+
+output "application_insights_connection_string" {
+  value     = module.application_insights.azure_application_insights_connection_string
+  sensitive = true
 }

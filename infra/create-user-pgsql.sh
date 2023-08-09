@@ -11,10 +11,15 @@ ADMIN_PASSWORD=$(az account get-access-token --resource-type oss-rdbms -o tsv --
 
 cat <<EOF > pgsqluser.sql
 select * from pgaadauth_create_principal_with_oid('${APPLICATION_LOGIN_NAME}', '${APPLICATION_IDENTITY_APPID}', 'service', false, false);
+EOF
+
+cat <<EOF > grantuser.sql
 GRANT ALL PRIVILEGES ON DATABASE "${DATABASE_NAME}" TO "${APPLICATION_LOGIN_NAME}";
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "${APPLICATION_LOGIN_NAME}";
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "${APPLICATION_LOGIN_NAME}";
 EOF
 
 az postgres flexible-server execute --name ${PGSQL_SERVER} --file-path pgsqluser.sql --admin-password "${ADMIN_PASSWORD}" --admin-user "${ADMIN_USER}" --verbose
+az postgres flexible-server execute --name ${PGSQL_SERVER} --file-path grantuser.sql --database-name ${DATABASE_NAME} --admin-password "${ADMIN_PASSWORD}" --admin-user "${ADMIN_USER}" --verbose
 rm pgsqluser.sql
+rm grantuser.sql

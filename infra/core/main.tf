@@ -12,7 +12,11 @@ terraform {
 }
 
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
 }
 
 locals {
@@ -63,4 +67,12 @@ module "mysql_database" {
   application_name = var.application_name
   environment      = local.environment
   location         = var.location
+}
+
+module "application_insights" {
+  source            = "./modules/application-insights"
+  resource_group    = azurerm_resource_group.main.name
+  application_name  = var.application_name
+  environment       = local.environment
+  location          = var.location
 }
