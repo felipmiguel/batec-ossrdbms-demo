@@ -22,6 +22,7 @@ resource "azurerm_user_assigned_identity" "mysql_umi" {
 resource "azurecaf_name" "mysql_server" {
   name          = var.application_name
   resource_type = "azurerm_mysql_server"
+  random_length = 3
   suffixes      = [var.environment]
 }
 
@@ -80,6 +81,9 @@ resource "azurerm_mysql_flexible_database" "database" {
   server_name         = azurerm_mysql_flexible_server.database.name
   charset             = "utf8"
   collation           = "utf8_unicode_ci"
+  lifecycle {
+    ignore_changes = [charset, collation]
+  }
 }
 
 resource "azurecaf_name" "mysql_firewall_rule" {

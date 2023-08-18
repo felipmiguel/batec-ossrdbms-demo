@@ -19,6 +19,7 @@ data "azurerm_client_config" "current_client" {
 resource "azurecaf_name" "postgresql_server" {
   name          = var.application_name
   resource_type = "azurerm_postgresql_flexible_server"
+  random_length = 3
   suffixes      = [var.environment]
 }
 
