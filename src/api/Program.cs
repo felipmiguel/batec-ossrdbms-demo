@@ -33,7 +33,7 @@ builder.Services.AddDbContext<TodoDb>(options =>
         case "Postgresql":
             string npgConnString = builder.Configuration["PgSqlConnection"] ?? throw new InvalidOperationException("PgSqlConnection must be set in the configuration");
             options
-                .UseNpgsql(npgConnString, options => options.UseAzureADAuthentication(azureCredential).EnableRetryOnFailure());
+                .UseNpgsql(npgConnString, npgsqlOptions => npgsqlOptions.UseAzureADAuthentication(azureCredential).EnableRetryOnFailure());
             break;
         default:
             throw new InvalidOperationException("TargetDb must be set to either MySql or Postgresql");
