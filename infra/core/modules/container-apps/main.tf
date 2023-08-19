@@ -9,8 +9,6 @@ terraform {
 
 locals {
   database_login_name     = var.application_name
-  mysql_connection_string = "${var.mysql_connection_string};UserID=${local.database_login_name};"
-  pgsql_connection_string = "${var.pgsql_connection_string};User Id=${local.database_login_name};"
 }
 
 resource "azurecaf_name" "container_registry" {
