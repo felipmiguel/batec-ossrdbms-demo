@@ -26,9 +26,9 @@ There are two specific projects for each database initialization:
 * [.NET SDK 6.0 or higher](https://dotnet.microsoft.com/download/dotnet/6.0)
 * Dotnet Entity Framework Core CLI: `dotnet tool install --global dotnet-ef`
 
->>Note: This sample has been tested on Ubuntu 22.04 on Windows Subsystem for Linux 2 (WSL2). There can be differences on some scripts dependending on the OS.
+>Note: This sample has been tested on Ubuntu 22.04 on Windows Subsystem for Linux 2 (WSL2). There can be differences on some scripts dependending on the OS.
 
-## How to use Batet Azure Data Passwordless Extensions
+## How to use Batec Azure Data Passwordless Extensions
 
 The following steps are required to use Batec Azure Data Passwordless Extensions:
 Add the following NuGet packages to your project:
@@ -153,7 +153,7 @@ The Terraform code creates the following resources:
 * An Azure Container Apps Environment.
 * A user assigned managed identity.
 
->> Note: Most of Terraform configuration has been generated using [Nubesgen](https://nubesgen.com/) and then adapted for this scenario.
+> Note: Most of Terraform configuration has been generated using [Nubesgen](https://nubesgen.com/) and then adapted for this scenario.
 
 To deploy the infrastructure, run the following commands:
 
