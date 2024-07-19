@@ -4,15 +4,15 @@
 
 This sample demonstrates how to use [Batec Azure Data Passwordless Extensions](https://github.com/felipmiguel/AzureDb.Passwordless) to access Azure Database for MySQL and PostgreSQL flexible servers without a password.
 
-The sample was adapted from azd template `Azure-Samples/todo-csharp-sql` with following changes:
-* Instead of using a SQL database, it uses a MySQL database or a Postgresql database.
+The sample was adapted from azd template `Azure-Samples/todo-csharp-sql` with the following changes:
+* Instead of using a SQL database, it uses a MySQL or Postgresql database.
 * Instead of Azure App Services, it uses Azure Container Apps.
-* The infastructure is created using Terraform instead of Bicep.
+* The infrastructure is created using Terraform instead of Bicep.
 * Of course, **it uses Batec Azure Data Passwordless Extensions to access the database without a password**.
 
 ![Infrastructure](assets/demo-components.svg)
 
-The C# code has been refactored to keep a the Entity Framework Core code in a separate project, with no database specific dependencies. This way, the same code can be used to access a MySQL database or a Postgresql database.
+The C# code has been refactored to keep the Entity Framework Core code in a separate project with no database-specific dependencies. Thus, the same code can be used with a MySQL or a PostgreSQL database.
 
 There are two specific projects for each database initialization:
 * `repo.mysql` - Initializes the MySQL database.
@@ -26,7 +26,7 @@ There are two specific projects for each database initialization:
 * [.NET SDK 6.0 or higher](https://dotnet.microsoft.com/download/dotnet/6.0)
 * Dotnet Entity Framework Core CLI: `dotnet tool install --global dotnet-ef`
 
->Note: This sample has been tested on Ubuntu 22.04 on Windows Subsystem for Linux 2 (WSL2). There can be differences on some scripts dependending on the OS.
+> [!NOTE]: This sample has been tested on Ubuntu 22.04 on Windows Subsystem for Linux 2 (WSL2). Some scripts can differ depending on the OS.
 
 ## How to use Batec Azure Data Passwordless Extensions
 
@@ -36,11 +36,11 @@ Add the following NuGet packages to your project:
 * `Batec.Azure.Data.Extensions.Npgsql.EntityFrameworkCore` - If you want to use Postgresql.
 * `Azure.Identity` - To use Azure Active Directory authentication.
 
-The sample uses both MySQL and Postgresql, so both packages are added. In your application probably you will only need one of them.
+The sample uses both MySQL and PostgreSQL, so both packages are added. In your application probably you will only need one of them.
 
 ### Configure the database connection
 
-To connect to the database, first it is necessary to initialize a `TokenCredential` object to be passed to Batec extensions. The easiest implementation is to use `DefaultAzureCredential` class. The advantage of using `DefaultAzureCredential` is that it will try to authenticate using different methods, like Managed Identity, Azure CLI, Visual Studio, etc. So it can be used not only in Azure, but also locally using Azure CLI or Visual Studio credentials.
+To connect to the database, first, it is necessary to initialize a `TokenCredential` object to be passed to Batec extensions. The easiest implementation is to use `DefaultAzureCredential` class. The advantage of using `DefaultAzureCredential` is that it will try to authenticate using different methods, like Managed Identity, Azure CLI, Visual Studio, etc. So it can be used not only in Azure, but also locally using Azure CLI or Visual Studio credentials.
 
 To initialize the `TokenCredential` object, use the following code:
 
@@ -59,7 +59,7 @@ else
 }
 ```
 
-This code will try to get from the configuration a variable named `UserAssignedManagedClientId`, in case it is defined it will try to use it as the Managed Identity Client Id. If it is not defined, it will try to use the default credentials.
+This code will try to get from the configuration a variable named `UserAssignedManagedClientId`. It will try to use it as the User Assigned Managed Identity Client ID if it is defined. If it is not defined, it will try to use the default credentials.
 
 The next step is to configure the database connection. To do that, use the following code for **MySQL**:
 
@@ -85,7 +85,7 @@ builder.Services.AddDbContext<TodoDb>(options =>
 });
 ```
 
-As the sample is unique for both versions, a configuration variable is used to define which database to use. The variable is named `TargetDb` and can be set to `MySql` or `Postgresql`. The complete code is:
+As the sample can use both PostgreSQL and MySQL, a configuration variable defines which database to use. The variable is `TargetDb` and can be set to `MySql` or `Postgresql`. The complete code is:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -127,19 +127,19 @@ builder.Services.AddDbContext<TodoDb>(options =>
 
 ## How to deploy the infrastructure
 
-The infrastructure deployment consists on the following steps:
+TL;DR: To deploy the infrastructure, use the [deploy-all.sh](infra/deploy-all.sh) script.
+
+This script automates all the steps described below:
 * Deploy the main infrastructure using Terraform
 * Configure MySQL database using Entity Framework Core migrations
 * Create a MySQL user linked to the managed identity
-* Configure Postgres database using Entity Framework Core migrations
-* Create a Postgres role (user) linked to the managed identity
+* Configure PostgreSQL database using Entity Framework Core migrations
+* Create a PostgreSQL role (user) linked to the managed identity
 * Create a Docker image for API application (todoapi). The Docker image is built in Azure Container Registry.
 * Create a Docker image for Web application (todoweb). The Docker image is built in Azure Container Registry.
-* Deploy the API application to Azure Container Apps twice, one for MySQL and one for Postgresql. The application is the same, it only changes the environment variables for the configuration settings described above.
+* Deploy the API application to Azure Container Apps twice, one for MySQL and one for PostgreSQL. The application is the same, it only changes the environment variables for the configuration settings described above.
 * Deploy the Web application to Azure Container Apps twice, one pointing to 
 MySQL API app and one pointing to Postgres API app.
-
-TL;DR: To deploy the infrastructure, use the [deploy-all.sh](infra/deploy-all.sh) script.
 
 ### Deploy the main infrastructure
 
@@ -163,15 +163,15 @@ terraform init
 terraform apply
 ```
 
-The infrastructure will use azure-cli logged in user as Azure AD administrator for both MySQL and Postgres databases. If you want to execute the application locally, your logged in user will be able to connect to the databases using `DefaultAzureCredential`.
+The infrastructure will use the azure-cli logged-in user as the Azure AD administrator for both MySQL and PostgreSQL databases. If you want to execute the application locally, your logged-in user will be able to connect to the databases using `DefaultAzureCredential`.
 
-The terraform configuration exports all necessary variables to configure the next steps.
+The Terraform configuration exports all necessary variables to configure the next steps.
 
 ### Configure MySQL database
 
 MySQL database is configured using Entity Framework Core migrations. The migrations are located in the `repo.mysql` folder. It is necessary to configure appsettings.json to point to the MySQL database. To configure the database, use `mysql_server_name`, `mysql_database_name` and `mysql_user_name` output variables from Terraform configuration.
 
-You can get the connection string as follows:
+You can get the connection string extracting the output variables from the Terraform state. For that, execute the following commands in your terminal:
 
 ```bash
 MYSQL_SERVER=$(terraform output -raw mysql_server_name)
@@ -180,7 +180,7 @@ MYSQL_ADMIN_USER=$(terraform output -raw mysql_user_name)
 MYSQL_CONNECTION_STRING="Server=${MYSQL_SERVER}.mysql.database.azure.com;Database=${MYSQL_DATABASE_NAME};SslMode=Required"
 ```
 
-The, set the connection string in `repo.mysql/appsettings.json`:
+Then, set the connection string in `repo.mysql/appsettings.json`:
 
 ```json
 {
@@ -196,11 +196,11 @@ Finally, run the migration in folder `src/repo.mysql`:
 dotnet ef database update
 ```
 
-### Configure Postgres database
+### Configure PostgreSQL database
 
-Postgres database is configured using Entity Framework Core migrations. The migrations are located in the `repo.pgsql` folder. It is necessary to configure appsettings.json to point to the Postgres database. To configure the database, use `pgsql_server_name`, `pgsql_database_name` and `pgsql_user_name` output variables from Terraform configuration.
+PostgreSQL database is configured using Entity Framework Core migrations. The migrations are located in the `repo.pgsql` folder. It is necessary to configure appsettings.json to point to the PostgreSQL database. To configure the database, use `pgsql_server_name`, `pgsql_database_name` and `pgsql_user_name` output variables from Terraform configuration.
 
-You can get the connection string as follows:
+You can get the connection string extracting the output variables from the Terraform state. For that, execute the following commands in your terminal:
 
 ```bash
 PGSQL_SERVER=$(terraform output -raw pgsql_server_name)
@@ -209,7 +209,7 @@ PGSQL_ADMIN_USER=$(terraform output -raw pgsql_user_name)
 PGSQL_CONNECTION_STRING="Server=${PGSQL_SERVER}.postgres.database.azure.com;Database=${PGSQL_DATABASE_NAME};Ssl Mode=Require;Port=5432;Trust Server Certificate=true"
 ```
 
-The, set the connection string in `repo.pgsql/appsettings.json`:
+Then, set the connection string in `repo.pgsql/appsettings.json`:
 
 ```json
 {
@@ -219,7 +219,7 @@ The, set the connection string in `repo.pgsql/appsettings.json`:
 }
 ```
 
-Finally, run the migration in folder `src/repo.pgsql`:
+Finally, run the Entity Framework migration in folder `src/repo.pgsql`:
 
 ```bash
 dotnet ef database update
@@ -227,14 +227,14 @@ dotnet ef database update
 
 ### Create a MySQL user linked to the managed identity
 
-To create a MySQL user that authenticates with Azure AD it is necessary to execute the following commands:
+To create a MySQL user that authenticates with Azure AD, it is necessary to execute the following commands:
 
 ```sql
 CREATE AADUSER '${APPLICATION_LOGIN_NAME}' IDENTIFIED BY '${APPLICATION_IDENTITY_APPID}';
 GRANT ALL PRIVILEGES ON ${DATABASE_NAME}.* TO '${APPLICATION_LOGIN_NAME}'@'%';
 ```
 
-Where `APPLICATION_LOGIN_NAME` is the name of the application login, `APPLICATION_IDENTITY_APPID` is the application identity app id and `DATABASE_NAME` is the name of the database. The application login name can be any valid user name on MySQL, but will be the one used in the connection string.
+Where `APPLICATION_LOGIN_NAME` is the name of the application login, `APPLICATION_IDENTITY_APPID` is the application identity app id and `DATABASE_NAME` is the name of the database. The application login name can be any valid user name on MySQL, but it will be the one used in the connection string.
 
 These parameters can be obtained from Terraform output:
 ```bash
@@ -245,13 +245,13 @@ MSI_CONTAINER_IDENTITY=$(terraform output -raw container_apps_identity)
 APPLICATION_IDENTITY_APPID=$(az identity show --id "${MSI_CONTAINER_IDENTITY}" -o tsv --query clientId)
 ```
 
-To perform the operations can be used az cli extension `rdbms-connect`. To install the extension, run the following command:
+To perform the database operations, it can be used the az cli extension `rdbms-connect`. To install the extension, run the following command:
 
 ```bash
 az extension add --name rdbms-connect --upgrade
 ```
 
-To execute that command it is necessary to login to MySQL using the Azure AD administrator user. As mentioned before, the Terraform configuration uses current logged in user as Azure AD administrator.
+To execute that database command, you must log in to MySQL using the Azure AD administrator user. As mentioned, the Terraform configuration uses the currently logged-in user as the Azure AD administrator.
 
 The password to be used in an access token that can be obtained using azure cli:
 
@@ -265,19 +265,19 @@ Then, to perform the operation:
 az mysql flexible-server execute --name ${MYSQL_SERVER} --file-path mysqluser.sql --admin-password "${ADMIN_PASSWORD}" --admin-user "${ADMIN_USER}" --verbose
 ```
 
-To facilitate the user create there is [create-user-mysql.sh](infra/create-user-mysql.sh) script that perform all these operations.
+To facilitate user creation, there is a [create-user-mysql.sh](infra/create-user-mysql.sh) script that performs all these operations.
 
-### Create a Postgres role (user) linked to the managed identity
+### Create a PostgreSQL role (user) linked to the managed identity
 
-To create a Postgres role(user) that authenticates with Azure AD it is necessary to execute the following commands:
+To create a PostgreSQL role (user) that authenticates with Azure AD it is necessary to execute the following commands:
 
 ```sql
 select * from pgaadauth_create_principal_with_oid('${APPLICATION_LOGIN_NAME}', '${APPLICATION_IDENTITY_APPID}', 'service', false, false);
 ```
 
-Where `APPLICATION_LOGIN_NAME` is the name of the application login, `APPLICATION_IDENTITY_APPID` is the application identity app id and `DATABASE_NAME` is the name of the database. The application login name can be any valid user name on Postgres, but will be the one used in the connection string.
+Where `APPLICATION_LOGIN_NAME` is the name of the application login, `APPLICATION_IDENTITY_APPID` is the application identity app id and `DATABASE_NAME` is the name of the database. The application login name can be any valid user name on Postgres, but it will be the one used in the connection string.
 
-Then it is necessary to grant privileges to the role:
+Then, it is necessary to grant privileges to the role:
 
 ```sql
 GRANT ALL PRIVILEGES ON DATABASE "${DATABASE_NAME}" TO "${APPLICATION_LOGIN_NAME}";
@@ -294,13 +294,13 @@ MSI_CONTAINER_IDENTITY=$(terraform output -raw container_apps_identity)
 APPLICATION_IDENTITY_APPID=$(az identity show --id "${MSI_CONTAINER_IDENTITY}" -o tsv --query clientId)
 ```
 
-To perform the operations can be used az cli extension `rdbms-connect`. To install the extension, run the following command:
+To perform the database operations, it can be used the az cli extension `rdbms-connect`. To install the extension, run the following command:
 
 ```bash
 az extension add --name rdbms-connect --upgrade
 ```
 
-To execute that command it is necessary to login to Postgres using the Azure AD administrator user. As mentioned before, the Terraform configuration uses current logged in user as Azure AD administrator.
+To execute that database command, you must log in to PostgreSQL using the Azure AD administrator user. As mentioned, the Terraform configuration uses the currently logged-in user as the Azure AD administrator.
 
 The password to be used in an access token that can be obtained using azure cli:
 
@@ -315,11 +315,11 @@ az postgres flexible-server execute --name ${PGSQL_SERVER} --file-path pgsqluser
 az postgres flexible-server execute --name ${PGSQL_SERVER} --file-path grantuser.sql --database-name ${DATABASE_NAME} --admin-password "${ADMIN_PASSWORD}" --admin-user "${ADMIN_USER}" --verbose
 ```
 
-To facilitate the user create there is [create-user-pgsql.sh](infra/create-user-pgsql.sh) script that perform all these operations.
+To facilitate the user creation, there is a [create-user-pgsql.sh](infra/create-user-pgsql.sh) script that perform all these operations.
 
 ### Create Docker images
 
-To create Docker images, it is possible to use Azure Container Registry build capabilities. To create the images, run the following commands:
+It is possible to use Azure Container Registry build capabilities to create Docker images. To make the images, run the following commands:
 
 In folder `src`, that contains a [Dockerfile](src/Dockerfile) for the API application, execute the following command:
 
@@ -333,7 +333,7 @@ In folder `src/web`, that contains a [Dockerfile](src/web/Dockerfile) for the We
 az acr build -t $ACR_NAME.azurecr.io/todoweb:latest -t $ACR_NAME.azurecr.io/todoweb:1.0.0 -r $ACR_NAME .
 ```
 
-Previous commands upload the folder to Azure Container Registry and then build the image in the cloud. It is also possible to build the image locally and then upload it to Azure Container Registry, but it requires having Docker tools installed locally.
+Previous commands upload the folder to Azure Container Registry and then build the image in the cloud. Creating the image locally and then uploading it to Azure Container Registry is also possible, but it requires installing Docker tools locally.
 
 The Azure Container Registry name can be obtained from Terraform output:
 
@@ -343,16 +343,16 @@ ACR_NAME=$(terraform output -raw container_registry_name)
 
 ### Deploy applications in Azure Container Apps
 
-The applications deployed to Azure Container Apps are the same, the only difference is the environment variables that are used to configure the database connection. In summary, there will be two API applications and two Web applications.
+The applications deployed to Azure Container Apps are the same. The only difference is the environment variables used to configure the database connection. In summary, there will be two API applications and two Web applications.
 
-API applications will have:
-* User assigned managed identity configured. That is used to access the databases.
-* Same identity is used to pull the Docker images from Azure Container Registry. Necessary permissions are configured by Terraform.
-* Environment variables to configure the database connection, MySQL or Postgres will have different values. Both of them will have the same value for the managed identity.
-* CORS configuration is updated to allow access from any Web application.
+The Web API applications will have:
+* User-assigned managed identity configured. That is used to access the databases.
+* The same identity is used to pull the Docker images from the Azure Container Registry. Terraform configures the necessary permissions.
+* The environment variables to configure the database connection, MySQL or Postgres, will have different values. However, both will have the same value for the managed identity.
+* CORS configuration has been updated to allow access from any web application.
 
 Web applications will have:
-* User assigned managed identity configured to pull Docker images from Azure Container Registry. Necessary permissions are configured by Terraform.
+* User-assigned managed identity configured to pull Docker images from Azure Container Registry. Terraform configures necessary permissions.
 * Environment variables to configure the API connection.
 
 To deploy the applications, run the following commands:
